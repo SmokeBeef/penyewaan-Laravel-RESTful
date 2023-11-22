@@ -37,6 +37,7 @@ Route::group([
 Route::prefix('kategori')->group(function () {
     Route::post('/', [KategoriController::class, 'create']);
     Route::get('/', [KategoriController::class, 'findAll']);
+    Route::get('/{id}/alat', [KategoriController::class, 'findKategoriAlat']);
     Route::put('/{id}', [KategoriController::class, 'update']);
     Route::delete('/{id}', [KategoriController::class, 'destroy']);
 });

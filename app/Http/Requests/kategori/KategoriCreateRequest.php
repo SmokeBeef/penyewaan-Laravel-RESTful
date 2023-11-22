@@ -25,7 +25,7 @@ class KategoriCreateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            "nama" => "required|string|max:100",
+            "nama" => "required|string|max:100|unique:kategoris",
         ];
     }
     protected function failedValidation(Validator $validator)

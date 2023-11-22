@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\kategori\KategoriCreateRequest;
 use App\Models\Kategori;
+use App\Services\Kategori\KategoriService;
 use Illuminate\Http\Client\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,19 +14,16 @@ use Nette\Utils\Strings;
 
 class KategoriController extends Controller
 {
+    private $kategoriService;
+    public function __construct(KategoriService $kategoriService)
+    {
+        $this->kategoriService = $kategoriService;
+    }
     public function create(KategoriCreateRequest $req): JsonResponse
     {
         $payload = $req->validated();
 
-
-        if (Kategori::where("nama", $payload["nama"])->exists()) {
-            return response()->json([
-                "errors" => ["nama kategori sudah tersedia"],
-            ], 400);
-        }
-
-        $kategori = new Kategori($payload);
-        $kategori->save();
+        $kategori = $this->kategoriService->create($payload);
 
         return response()->json([
             "message" => "success",
@@ -33,33 +31,38 @@ class KategoriController extends Controller
         ], 201);
     }
 
-    public function findAll(Request $req): JsonResponse
+    public function findAll(): JsonResponse
     {
-        $kategori = Kategori::all();
+        $kategori = $this->kategoriService->getAll();
 
         return response()->json([
             "message" => "success",
             "data" => $kategori,
         ], 200);
     }
+    public function findKategoriAlat($id): JsonResponse
+    {
+        $kategori = $this->kategoriService->getByIdJoin($id);
+        if (!$kategori) {
+            return response()->json(["errors" => "id " . $id . " not found"], 404);
+        }
+        return response()->json([
+            "message" => "success",
+            "data" => $kategori
+        ], 200);
+    }
+
     public function update(KategoriCreateRequest $req, $id): JsonResponse
     {
         $payload = $req->validated();
 
 
-        $kategori = Kategori::find(+$id);
+        $kategori = $this->kategoriService->update($id, $payload);
         if (!$kategori) {
             return response()->json([
                 "errors" => ["id " . $id . " tidak ditemukan"],
             ], 404);
         }
-        if (Kategori::where("nama", $payload["nama"])->exists()) {
-            return response()->json([
-                "errors" => ["nama kategori sudah tersedia"],
-            ], 409);
-        }
-        $kategori->update($payload);
-        $kategori->save();
         return response()->json([
             "message" => "success",
             "data" => $kategori,
@@ -68,13 +71,12 @@ class KategoriController extends Controller
     }
     public function destroy($id): JsonResponse
     {
-        $kategori = Kategori::find(+$id);
+        $kategori = $this->kategoriService->destroy($id);
         if (!$kategori) {
             return response()->json([
-                "errors" => ["id " . $id . " tidak ditemukan"],
+                "errors" => "id " . $id . " tidak ditemukan",
             ], 404);
         }
-        $kategori->delete();
         return response()->json([
             "message" => "success",
             "data" => $kategori
